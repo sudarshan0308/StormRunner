@@ -57,7 +57,7 @@ namespace StormRunner
                 retakeButton.onClick.AddListener(RetakePhoto);
             
             if (confirmButton != null)
-                confirmButton.confirmButton.onClick.AddListener(ConfirmAvatar);
+                confirmButton.onClick.AddListener(ConfirmAvatar);
             
             if (backButton != null)
                 backButton.onClick.AddListener(GoBack);

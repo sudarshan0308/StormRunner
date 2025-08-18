@@ -89,13 +89,27 @@ namespace StormRunner
         public void LoadMainMenu()
         {
             CurrentGameState = GameState.MainMenu;
-            SceneManager.LoadScene(mainMenuScene);
+            if (SceneLoader.Instance != null)
+            {
+                SceneLoader.Instance.LoadScene(mainMenuScene);
+            }
+            else
+            {
+                SceneManager.LoadScene(mainMenuScene);
+            }
         }
         
         public void LoadAvatarCreation()
         {
             CurrentGameState = GameState.AvatarCreation;
-            SceneManager.LoadScene(avatarCreationScene);
+            if (SceneLoader.Instance != null)
+            {
+                SceneLoader.Instance.LoadScene(avatarCreationScene);
+            }
+            else
+            {
+                SceneManager.LoadScene(avatarCreationScene);
+            }
         }
         
         public void LoadGameScene()
