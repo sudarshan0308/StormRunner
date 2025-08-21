@@ -3,6 +3,7 @@ Camera system for following the player
 """
 
 import pygame
+import random
 from src.config import Config
 
 class CameraSystem:
@@ -64,7 +65,6 @@ class CameraSystem:
         
         # Add shake effect
         if self.shake_intensity > 0:
-            import random
             shake_x = random.uniform(-self.shake_intensity, self.shake_intensity)
             shake_y = random.uniform(-self.shake_intensity, self.shake_intensity)
             offset_x += shake_x

@@ -3,57 +3,38 @@ Main menu state
 """
 
 import pygame
-import pygame_gui
 from src.states.base_state import BaseState
 from src.config import Config
-from src.game_manager import GameStateType
 
 class MainMenuState(BaseState):
     def __init__(self, game_manager):
         super().__init__(game_manager)
-        self.ui_manager = pygame_gui.UIManager((Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT))
         self.background_color = Config.CLEAR_SKY
         self.title_font = pygame.font.Font(None, 72)
         self.subtitle_font = pygame.font.Font(None, 36)
+        self.button_font = pygame.font.Font(None, 48)
         
-        # UI elements
-        self.play_button = None
-        self.settings_button = None
-        self.quit_button = None
+        # Button properties
+        self.buttons = []
+        self.selected_button = 0
         
         # Animation
         self.title_pulse = 0
         self.particle_system = []
         
     def enter(self):
-        """Initialize main menu UI"""
-        self.ui_manager = pygame_gui.UIManager((Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT))
-        
+        """Initialize main menu"""
         # Create buttons
-        button_width = 200
-        button_height = 50
+        button_width = 300
+        button_height = 60
         button_x = Config.SCREEN_WIDTH // 2 - button_width // 2
+        start_y = 350
         
-        self.play_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(button_x, 350, button_width, button_height),
-            text='Start Adventure',
-            manager=self.ui_manager
-        )
-        
-        self.settings_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(button_x, 420, button_width, button_height),
-            text='Settings',
-            manager=self.ui_manager
-        )
-        
-        self.quit_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(button_x, 490, button_width, button_height),
-            text='Quit Game',
-            manager=self.ui_manager
-        )
-        
-        # Start background music
-        self.audio_manager.play_music("menu_music")
+        self.buttons = [
+            {'text': 'Start Adventure', 'rect': pygame.Rect(button_x, start_y, button_width, button_height), 'action': 'start'},
+            {'text': 'Settings', 'rect': pygame.Rect(button_x, start_y + 80, button_width, button_height), 'action': 'settings'},
+            {'text': 'Quit Game', 'rect': pygame.Rect(button_x, start_y + 160, button_width, button_height), 'action': 'quit'}
+        ]
         
         # Initialize particles
         self._init_particles()
@@ -64,30 +45,51 @@ class MainMenuState(BaseState):
         
     def handle_event(self, event):
         """Handle main menu events"""
-        self.ui_manager.process_events(event)
-        
-        if event.type == pygame_gui.UI_BUTTON_PRESSED:
-            if event.ui_element == self.play_button:
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP:
+                self.selected_button = (self.selected_button - 1) % len(self.buttons)
                 self.audio_manager.play_sfx("button_click")
-                # Check if player has avatar
-                player_data = self.game_manager.get_player_data()
-                if player_data.get('has_avatar', False):
-                    self.game_manager.change_state(GameStateType.PLAYING)
-                else:
-                    self.game_manager.change_state(GameStateType.AVATAR_CREATION)
+            elif event.key == pygame.K_DOWN:
+                self.selected_button = (self.selected_button + 1) % len(self.buttons)
+                self.audio_manager.play_sfx("button_click")
+            elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                self._handle_button_action(self.buttons[self.selected_button]['action'])
+                
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:  # Left click
+                mouse_pos = pygame.mouse.get_pos()
+                for i, button in enumerate(self.buttons):
+                    if button['rect'].collidepoint(mouse_pos):
+                        self.selected_button = i
+                        self._handle_button_action(button['action'])
+                        
+        elif event.type == pygame.MOUSEMOTION:
+            mouse_pos = pygame.mouse.get_pos()
+            for i, button in enumerate(self.buttons):
+                if button['rect'].collidepoint(mouse_pos):
+                    self.selected_button = i
                     
-            elif event.ui_element == self.settings_button:
-                self.audio_manager.play_sfx("button_click")
-                # TODO: Implement settings menu
-                
-            elif event.ui_element == self.quit_button:
-                self.audio_manager.play_sfx("button_click")
-                self.game_manager.quit_game()
-                
+    def _handle_button_action(self, action):
+        """Handle button actions"""
+        from src.game_manager import GameStateType
+        
+        self.audio_manager.play_sfx("button_click")
+        
+        if action == 'start':
+            # Check if player has avatar
+            player_data = self.game_manager.get_player_data()
+            if player_data.get('has_avatar', False):
+                self.game_manager.change_state(GameStateType.PLAYING)
+            else:
+                self.game_manager.change_state(GameStateType.AVATAR_CREATION)
+        elif action == 'settings':
+            # TODO: Implement settings menu
+            pass
+        elif action == 'quit':
+            self.game_manager.quit_game()
+        
     def update(self, dt):
         """Update main menu"""
-        self.ui_manager.update(dt / 1000.0)
-        
         # Update title animation
         self.title_pulse += dt * 0.003
         
@@ -103,14 +105,15 @@ class MainMenuState(BaseState):
         self._draw_particles(screen)
         
         # Draw title with pulse effect
-        pulse_scale = 1.0 + 0.1 * abs(pygame.math.Vector2(1, 0).rotate(self.title_pulse * 180).x)
+        import math
+        pulse_scale = 1.0 + 0.1 * abs(math.sin(self.title_pulse))
         title_text = self.title_font.render("StormRunner", True, Config.WHITE)
         title_rect = title_text.get_rect()
         
         # Scale title
-        scaled_title = pygame.transform.scale(title_text, 
-                                            (int(title_rect.width * pulse_scale), 
-                                             int(title_rect.height * pulse_scale)))
+        scaled_width = int(title_rect.width * pulse_scale)
+        scaled_height = int(title_rect.height * pulse_scale)
+        scaled_title = pygame.transform.scale(title_text, (scaled_width, scaled_height))
         scaled_rect = scaled_title.get_rect(center=(Config.SCREEN_WIDTH // 2, 150))
         screen.blit(scaled_title, scaled_rect)
         
@@ -119,14 +122,31 @@ class MainMenuState(BaseState):
         subtitle_rect = subtitle_text.get_rect(center=(Config.SCREEN_WIDTH // 2, 220))
         screen.blit(subtitle_text, subtitle_rect)
         
+        # Draw buttons
+        for i, button in enumerate(self.buttons):
+            color = Config.WHITE if i == self.selected_button else Config.LIGHT_GRAY
+            bg_color = Config.BLUE if i == self.selected_button else Config.DARK_GRAY
+            
+            # Draw button background
+            pygame.draw.rect(screen, bg_color, button['rect'])
+            pygame.draw.rect(screen, color, button['rect'], 2)
+            
+            # Draw button text
+            text = self.button_font.render(button['text'], True, color)
+            text_rect = text.get_rect(center=button['rect'].center)
+            screen.blit(text, text_rect)
+        
+        # Draw instructions
+        instruction_font = pygame.font.Font(None, 24)
+        instruction_text = instruction_font.render("Use Arrow Keys and Enter, or click with mouse", True, Config.GRAY)
+        instruction_rect = instruction_text.get_rect(center=(Config.SCREEN_WIDTH // 2, Config.SCREEN_HEIGHT - 50))
+        screen.blit(instruction_text, instruction_rect)
+        
         # Draw version info
         version_font = pygame.font.Font(None, 24)
         version_text = version_font.render("v1.0.0 - Python Edition", True, Config.GRAY)
         version_rect = version_text.get_rect(bottomright=(Config.SCREEN_WIDTH - 10, Config.SCREEN_HEIGHT - 10))
         screen.blit(version_text, version_rect)
-        
-        # Draw UI
-        self.ui_manager.draw_ui(screen)
         
     def _draw_gradient_background(self, screen):
         """Draw gradient background"""
@@ -158,12 +178,12 @@ class MainMenuState(BaseState):
             particle['y'] += particle['speed'] * dt * 0.1
             if particle['y'] > Config.SCREEN_HEIGHT:
                 particle['y'] = -10
-                particle['x'] = pygame.math.Vector2(particle['x'], 0).rotate(0.1).x % Config.SCREEN_WIDTH
+                import random
+                particle['x'] = random.randint(0, Config.SCREEN_WIDTH)
                 
     def _draw_particles(self, screen):
         """Draw background particles"""
         for particle in self.particle_system:
-            color = (*Config.WHITE, particle['alpha'])
             pygame.draw.circle(screen, Config.WHITE, 
                              (int(particle['x']), int(particle['y'])), 
                              particle['size'])

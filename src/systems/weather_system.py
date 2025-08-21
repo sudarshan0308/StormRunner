@@ -45,6 +45,7 @@ class WeatherSystem:
         """Set weather type"""
         if weather_type in ["clear", "rain", "storm"]:
             self.current_weather = weather_type
+            print(f"Weather changed to: {weather_type}")
             
     def update(self, dt):
         """Update weather system"""
@@ -117,6 +118,7 @@ class WeatherSystem:
         weather_types = ["clear", "rain", "storm"]
         weights = [0.5, 0.3, 0.2]  # Clear weather more likely
         self.current_weather = random.choices(weather_types, weights=weights)[0]
+        print(f"Auto weather change to: {self.current_weather}")
         
     def _update_rain(self, dt):
         """Update rain particles"""
@@ -145,18 +147,8 @@ class WeatherSystem:
                     end_pos = (int(particle['x'] - self.wind_strength * 5), 
                              int(particle['y'] + particle['length']))
                     
-                    # Draw rain line with alpha
-                    rain_surface = pygame.Surface((abs(end_pos[0] - start_pos[0]) + 2, 
-                                                 abs(end_pos[1] - start_pos[1]) + 2))
-                    rain_surface.set_alpha(alpha)
-                    rain_surface.fill(Config.RAIN_COLOR)
-                    
-                    pygame.draw.line(rain_surface, Config.RAIN_COLOR, 
-                                   (1, 1), (abs(end_pos[0] - start_pos[0]), 
-                                           abs(end_pos[1] - start_pos[1])), 2)
-                    
-                    screen.blit(rain_surface, (min(start_pos[0], end_pos[0]), 
-                                             min(start_pos[1], end_pos[1])))
+                    # Draw rain line
+                    pygame.draw.line(screen, Config.RAIN_COLOR, start_pos, end_pos, 2)
                     
     def _trigger_lightning(self):
         """Trigger lightning effect"""

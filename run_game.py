@@ -24,8 +24,7 @@ def install_requirements():
         "pygame==2.5.2",
         "opencv-python==4.8.1.78", 
         "numpy==1.24.3",
-        "Pillow==10.0.1",
-        "pygame-gui==0.6.9"
+        "Pillow==10.0.1"
     ]
     
     print("🔄 Installing game dependencies...")
@@ -43,6 +42,12 @@ def run_game():
     try:
         print("🎮 Starting StormRunner...")
         print("=" * 50)
+        
+        # Change to script directory
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        os.chdir(script_dir)
+        
+        # Import and run main
         import main
         main.main()
     except ImportError as e:
@@ -63,7 +68,7 @@ def main():
     
     # Try to run game first
     try:
-        import pygame, cv2, numpy, PIL, pygame_gui
+        import pygame, cv2, numpy, PIL
         print("✅ All dependencies found")
         run_game()
     except ImportError:

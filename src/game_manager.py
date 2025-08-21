@@ -5,12 +5,6 @@ Main game manager that handles all game states and systems
 import pygame
 import sys
 from enum import Enum
-from src.config import Config
-from src.states.main_menu import MainMenuState
-from src.states.avatar_creation import AvatarCreationState
-from src.states.game_state import GameState
-from src.audio_manager import AudioManager
-from src.save_manager import SaveManager
 
 class GameStateType(Enum):
     MAIN_MENU = "main_menu"
@@ -21,6 +15,8 @@ class GameStateType(Enum):
 
 class GameManager:
     def __init__(self):
+        from src.config import Config
+        
         # Initialize display
         self.screen = pygame.display.set_mode((Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT))
         pygame.display.set_caption(Config.TITLE)
@@ -31,6 +27,9 @@ class GameManager:
         Config.create_directories()
         
         # Initialize managers
+        from src.audio_manager import AudioManager
+        from src.save_manager import SaveManager
+        
         self.audio_manager = AudioManager()
         self.save_manager = SaveManager()
         
@@ -47,6 +46,10 @@ class GameManager:
         
     def _initialize_states(self):
         """Initialize all game states"""
+        from src.states.main_menu import MainMenuState
+        from src.states.avatar_creation import AvatarCreationState
+        from src.states.game_state import GameState
+        
         self.states[GameStateType.MAIN_MENU] = MainMenuState(self)
         self.states[GameStateType.AVATAR_CREATION] = AvatarCreationState(self)
         self.states[GameStateType.PLAYING] = GameState(self)
@@ -66,6 +69,8 @@ class GameManager:
             
     def run(self):
         """Main game loop"""
+        from src.config import Config
+        
         self.current_state.enter()
         
         while self.running:

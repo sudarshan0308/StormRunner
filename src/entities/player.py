@@ -3,8 +3,6 @@ Player entity with avatar support
 """
 
 import pygame
-import cv2
-import numpy as np
 import os
 from src.config import Config
 
@@ -42,15 +40,9 @@ class Player:
             avatar_path = self.player_data.get('avatar_path', '')
             if os.path.exists(avatar_path):
                 try:
-                    # Load avatar image
-                    avatar_img = cv2.imread(avatar_path)
-                    avatar_img = cv2.cvtColor(avatar_img, cv2.COLOR_BGR2RGB)
-                    avatar_img = cv2.resize(avatar_img, (self.width, self.height))
-                    
-                    # Convert to pygame surface
-                    avatar_img = np.rot90(avatar_img)
-                    avatar_img = np.flipud(avatar_img)
-                    self.avatar_surface = pygame.surfarray.make_surface(avatar_img)
+                    # Load avatar image using pygame
+                    self.avatar_surface = pygame.image.load(avatar_path)
+                    self.avatar_surface = pygame.transform.scale(self.avatar_surface, (self.width, self.height))
                 except Exception as e:
                     print(f"Failed to load avatar: {e}")
                     self.create_default_avatar()
@@ -93,7 +85,6 @@ class Player:
         if self.on_ground:
             self.vel_y = -Config.JUMP_STRENGTH
             self.on_ground = False
-            # Play jump sound would go here
             
     def set_running(self, running):
         """Set running state"""
@@ -165,7 +156,6 @@ class Player:
             footstep_interval = 300 if not self.is_running else 200
             
             if self.footstep_timer > footstep_interval:
-                # Play footstep sound would go here
                 self.footstep_timer = 0
                 
     def get_rect(self):

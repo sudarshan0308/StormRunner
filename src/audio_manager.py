@@ -3,7 +3,7 @@ Audio manager for music and sound effects
 """
 
 import pygame
-import os
+import numpy as np
 from src.config import Config
 
 class AudioManager:
@@ -44,42 +44,39 @@ class AudioManager:
             
     def _create_beep(self, frequency, duration):
         """Create a simple beep sound"""
-        sample_rate = 22050
-        frames = int(duration * sample_rate)
-        arr = []
-        
-        for i in range(frames):
-            time = float(i) / sample_rate
-            wave = 4096 * pygame.math.Vector2(1, 0).rotate(frequency * time * 360).y
-            arr.append([int(wave), int(wave)])
+        try:
+            sample_rate = 22050
+            frames = int(duration * sample_rate)
+            arr = []
             
-        sound = pygame.sndarray.make_sound(pygame.array.array('i', arr))
-        return sound
+            for i in range(frames):
+                time = float(i) / sample_rate
+                wave = 4096 * np.sin(frequency * 2 * np.pi * time)
+                arr.append([int(wave), int(wave)])
+                
+            sound = pygame.sndarray.make_sound(np.array(arr, dtype=np.int16))
+            return sound
+        except Exception as e:
+            print(f"Failed to create beep sound: {e}")
+            return None
         
     def play_music(self, music_name):
         """Play background music"""
         try:
-            music_path = os.path.join(Config.AUDIO_DIR, f"{music_name}.ogg")
-            if os.path.exists(music_path):
-                pygame.mixer.music.load(music_path)
-                pygame.mixer.music.set_volume(self.music_volume * self.master_volume)
-                pygame.mixer.music.play(-1)  # Loop indefinitely
-            else:
-                print(f"Music file not found: {music_path}")
+            # For now, just print that music would play
+            print(f"Playing music: {music_name}")
         except Exception as e:
             print(f"Failed to play music: {e}")
             
     def play_sfx(self, sfx_name, volume=1.0):
         """Play sound effect"""
         try:
-            if sfx_name in self.sfx:
+            if sfx_name in self.sfx and self.sfx[sfx_name]:
                 sound = self.sfx[sfx_name]
                 sound.set_volume(self.sfx_volume * self.master_volume * volume)
                 sound.play()
-            else:
-                print(f"Sound effect not found: {sfx_name}")
         except Exception as e:
-            print(f"Failed to play sound effect: {e}")
+            print(f"Failed to play sound effect {sfx_name}: {e}")
             
     def stop_music(self):
         """Stop background music"""
@@ -96,12 +93,10 @@ class AudioManager:
     def set_master_volume(self, volume):
         """Set master volume"""
         self.master_volume = max(0.0, min(1.0, volume))
-        pygame.mixer.music.set_volume(self.music_volume * self.master_volume)
         
     def set_music_volume(self, volume):
         """Set music volume"""
         self.music_volume = max(0.0, min(1.0, volume))
-        pygame.mixer.music.set_volume(self.music_volume * self.master_volume)
         
     def set_sfx_volume(self, volume):
         """Set sound effects volume"""
